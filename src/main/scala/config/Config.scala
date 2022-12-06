@@ -6,7 +6,8 @@ object Config {
   case class Config(
                      idClient: Int = -1,
                      filepath: String = " ",
-                     finalpath: String = " "
+                     finalpath: String = " ",
+                     service: String = " "
                    )
   val builder = OParser.builder[Config]
   val argParser = {
@@ -23,9 +24,20 @@ object Config {
         .action((o, c) => c.copy( filepath = o))
         .text("required string"),
       opt[String]('f', "finalpath")
-        .required()
+        //.required()
         .action((f, c) => c.copy(finalpath = f))
-        .text("required string"))
+        .text("required string"),
+      opt[String]('s', "service")
+      .required()
+      .action((s, c) => c.copy(service = s))
+      .text("required string"))
+      .validate(s => {
+      if (s == "deletePerson" || s == "hashData") {
+        success
+      } else {
+        failure("service required are deletePerson or hashData")
+      }
+    })
 
   }
 }

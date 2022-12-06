@@ -3,14 +3,14 @@ package service1
 import config.Client
 import config.Config.{Config, argParser}
 import org.apache.log4j.{Level, Logger}
-import org.apache.spark.sql.catalyst.expressions.XxHash64
-import org.apache.spark.sql.functions.col
+import org.apache.spark.sql.functions.{col, udf}
 import org.apache.spark.sql.{Dataset, SparkSession}
 import scopt.OParser
 
+import java.security.MessageDigest
 import scala.sys.exit
 
-object DeletePerson {
+object GDPRservice {
 
   /** Our main function where the action happens */
 
@@ -22,7 +22,8 @@ object DeletePerson {
 
     val spark = SparkSession
       .builder
-      .appName("SparkSQ")
+      .appName("Spark")
+      .master("local")
       .getOrCreate()
 
     OParser.parse(argParser, args, Config()) match {
@@ -34,11 +35,13 @@ object DeletePerson {
         println(config.filepath)
         println(config.finalpath)
 
-        readDataset(spark,config.filepath)
-        deleteClient(config.idClient,spark,config.filepath)
-        }else {
 
+          readDataset(spark,config.filepath)
+          deleteClient(config.idClient,spark,config.filepath,config.finalpath)
+        } else if(config.service == "hashData"){
 
+          val dataset = readDataset(spark,config.filepath)
+          hashData(spark,dataset,config.idClient,config.finalpath)
         }
       case _ =>
         exit(1)
@@ -52,11 +55,9 @@ object DeletePerson {
     import sparkSession.implicits._
     val df = sparkSession.read
       .option("header", "true")
-      .option("delimiter", ";")
+      .option("inferSchema","true")
       .csv(path)
-      .coalesce(1)
       .as[Client]
-
     df
 
   }
@@ -72,7 +73,7 @@ object DeletePerson {
       .option("header", true)
       .option("delimiter",";")
       .mode("overwrite")
-      .csv("/out")
+      .csv(path)
 
 //    import scala.sys.process._
 //
@@ -82,24 +83,26 @@ object DeletePerson {
 
   }
 
-  def deleteClient(id:Int,sparkSession: SparkSession,path:String): Unit ={
+  def deleteClient(id:Int,sparkSession: SparkSession,path:String,finalpath:String): Unit ={
     val dataset1 = readDataset(sparkSession,path)
     val dataset_filtred= delete(dataset1,id)
     dataset_filtred.show()
-    writeDataset(dataset_filtred,path)
+    writeDataset(dataset_filtred,finalpath)
 
   }
 
-  def hash(s:String): String ={
-    val hash = XxHash64.hashCode(s)
-  }
+  def hashData(sparkSession: SparkSession,dataset: Dataset[Client],id:Long,path:String): Unit={
 
-  def hashData(sparkSession: SparkSession,dataset: Dataset[Client],id:Int): Unit ={
-
+    import sparkSession.implicits._
     val data_filtred = dataset.filter (! col ("identifiantClient").isin(id) )
-    val data_filtred2 = dataset.filter (col ("identifiantClient").isin(id) ).map(client => (client.identifiantClient,client.nom.))
+    val data_selected = dataset.filter (col ("identifiantClient").isin(id))
 
+    val hashedColumn = udf((input: String) => MessageDigest.getInstance("SHA-256").digest(input.getBytes).map("%02x".format(_)).mkString)
+    val hashedData = data_selected.withColumn("Nom", hashedColumn(col("Nom"))).withColumn("Prenom", hashedColumn(col("Prenom"))).withColumn("Adresse", hashedColumn(col("Adresse"))).as[Client]
 
+    val finaldata=data_filtred.union(hashedData)
+    finaldata.show()
+    writeDataset(finaldata,path)
 
 
   }
