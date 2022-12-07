@@ -36,3 +36,5 @@ Une fois le dataset créé, nous en supprimons le client associé à l'id donné
 
 ## Service n°2
 
+Dans le cas où l'utilisateur aurait saisie "hashData" pour l'argument service, le traitement est sensiblement le même. Dans un premier temps, un dataset est construit à partir du fichier renseigné dans l'argument filepath, puis ) partir de ce dataset, un nouveau dataset est créé avec seulement la ligne correspondant à l'id saisie dont nous aurons haché les valeurs, par la même occasion nous supprimons la ligne correspondant à cette id dans le premier dataset.
+Nous avons donc le dataset originel sans la ligne à haché et un autre dataset avec seulement la ligne haché puis nous faison l'union de ces deux datasets que nous sauvegardons dans un nouveau fichier csv à l'emplacement indiqué dans finalPath.
