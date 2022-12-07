@@ -6,15 +6,18 @@ Nous décrirons dans un premier temps la conception et le fonctionnement du serv
 
 Nous avons utilisés les technologies suivantes pour ce projet :
 
-- Scala versio 2.11.11
+- Scala version 2.11.11
 - Spark core version 2.4.8
 - Spark sql version 2.4.8
 - Spray json version 1.3.6
 - Scopt version 4.0.1
 
 
-Le service récupère d'abords les arguments saisies par l'utilisateur, facilité par l'utilisation de scopt sur laquelle nous reviendrons.
+Le service récupère d'abords les arguments saisies par l'utilisateur, facilité par l'utilisation de scopt.
 
+## Scopt
+
+Scopt nous permet de spécifier plusieurs arguments en ligne de commande, le type attendu et si ces  arguments sont nécéssaires ou non. Cela nous évite de manipuler dans le code des variables args(i) que l'on pourrait confondre et que l'utilisateurs devrait saisir dans un ordre précis sans savoir à quoi ils correspondent sans une parfaite connaissance du code.
 Dans une case class "Config" ont été précisé l'ensemble des options possibles, dans notre cas les arguments sont les suivants et ils sont tous "required", cela signifie que l'utilisateur doit nécéssairement les saisir à chaque fois. Les options retenues sont les suivantes :
 
 - idClient
@@ -33,4 +36,3 @@ Une fois le dataset créé, nous en supprimons le client associé à l'id donné
 
 ## Service n°2
 
-## Scopt
